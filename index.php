@@ -206,6 +206,29 @@ if ($post) {
         flash('Gmail disconnected.');
         redirect('./?p=gmail');
 
+    case 'import_apply':
+        $f = data_path('import.json');
+        $imp = read_json('import.json', []);
+        if (!$imp || empty($imp['txns']) || !account_by_id($db, $imp['account'] ?? '')) { flash('Nothing to import.'); redirect('./?p=txns'); }
+        $n = db_update(function (&$db) use ($imp, $f) {
+            $net = 0; $n = 0;
+            foreach ($imp['txns'] as $t) {
+                if (!valid_date($t['date'] ?? '') || ($t['amount'] ?? 0) <= 0 || !in_array($t['type'] ?? '', ['expense', 'income'], true)) continue;
+                $db['txns'][] = ['id' => new_id(), 'created' => date('c'), 'date' => $t['date'], 'type' => $t['type'],
+                    'amount' => round((float)$t['amount'], 2), 'account' => $imp['account'], 'to_account' => null,
+                    'category' => $t['category'] ?? 'Other', 'note' => mb_substr($t['note'] ?? '', 0, 200), 'imported' => true];
+                $net += $t['type'] === 'income' ? $t['amount'] : -$t['amount'];
+                $n++;
+            }
+            // Keep today's balance exactly as it is: shift the opening balance by what was imported.
+            foreach ($db['accounts'] as &$a) if ($a['id'] === $imp['account']) $a['opening'] = round($a['opening'] - $net, 2);
+            unset($a);
+            rename($f, $f . '.done');
+            return $n;
+        });
+        flash("$n entries imported. Balances unchanged.");
+        redirect('./?p=txns&m=2026-11');
+
     case 'change_password':
         $a = auth();
         if (!password_verify($_POST['current'] ?? '', $a['hash'])) flash('Current password is wrong.');
@@ -214,6 +237,23 @@ if ($post) {
         redirect('./?p=plan');
     }
     redirect('./');
+}
+
+/* ---------- one-time import page ---------- */
+if ($p === 'import') {
+    $imp = read_json('import.json', []);
+    layout('Import', 'txns', function () use ($imp, $db) { ?>
+      <section class="card narrow"><h1>Import from bank statement</h1>
+      <?php if (!$imp || empty($imp['txns'])): ?><p class="muted">Nothing waiting to import.</p>
+      <?php else:
+        $in = array_sum(array_map(fn($t) => $t['type'] === 'income' ? $t['amount'] : 0, $imp['txns']));
+        $out = array_sum(array_map(fn($t) => $t['type'] === 'expense' ? $t['amount'] : 0, $imp['txns'])); ?>
+        <p><?= count($imp['txns']) ?> entries into <strong><?= e(account_by_id($db, $imp['account'])['name'] ?? '?') ?></strong>:
+           spent <?= e(inr($out)) ?>, received <?= e(inr($in)) ?>. Your balance stays as it is today.</p>
+        <form method="post" action="?p=import_apply"><?= csrf_field() ?><button class="btn primary">Import now</button></form>
+      <?php endif; ?></section>
+    <?php });
+    exit;
 }
 
 /* ---------- gmail connect (GET) ---------- */
