@@ -29,7 +29,7 @@ function page_auth(string $title, callable $body): void {
 
 function layout(string $title, string $active, callable $body): void {
     head_html($title);
-    $nav = ['home' => 'Dashboard', 'add' => '+ Add', 'txns' => 'Entries', 'accounts' => 'Accounts', 'plan' => 'Plan'];
+    $nav = ['home' => 'Dashboard', 'add' => '+ Add', 'txns' => 'Entries', 'accounts' => 'Accounts', 'plan' => 'Plan', 'gmail' => 'Gmail'];
     $msg = flash(); ?>
 <body>
 <header class="top">
@@ -279,6 +279,8 @@ function page_add(array $db): void {
         if (!empty($_GET['date']) && valid_date($_GET['date'])) $t['date'] = $_GET['date'];
         if (!empty($_GET['type'])) $t['type'] = $_GET['type'];
         if (!empty($_GET['account'])) $t['account'] = $_GET['account'];
+        if (!empty($_GET['amount']) && is_numeric($_GET['amount'])) $t['amount'] = (float)$_GET['amount'];
+        if (!empty($_GET['note'])) $t['note'] = mb_substr(rawurldecode($_GET['note']), 0, 200);
     }
     layout(!empty($t['id']) ? 'Edit entry' : 'Add entry', 'add', function () use ($db, $t) { ?>
       <section class="card narrow">

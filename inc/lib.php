@@ -44,7 +44,12 @@ function db_update(callable $fn) {
 
 function db_load(): array {
     $db = read_json('db.json', []);
-    return $db ?: seed_db();
+    if (!$db) return seed_db();
+    // One-time move from the old default income list to the one that names the real income sources.
+    if (($db['categories']['income'] ?? null) === ['Salary', 'Freelance / side income', 'Business sales', 'Refund / cashback', 'Other income']) {
+        $db['categories']['income'] = ['Salary', 'Balit and Sons', 'Kaskaya', 'Overtime', 'Refund / cashback', 'Other income'];
+    }
+    return $db;
 }
 
 function new_id(): string { return bin2hex(random_bytes(6)); }
@@ -60,7 +65,7 @@ function seed_db(string $starter = ''): array {
         'categories' => [
             'expense' => ['Food & groceries', 'Eating out', 'Travel', 'Bills & recharge', 'Rent', 'Family support',
                           'Shopping', 'Health', 'Wedding', 'Gifts', 'Business', 'Fees & charges', 'Other'],
-            'income'  => ['Salary', 'Freelance / side income', 'Business sales', 'Refund / cashback', 'Other income'],
+            'income'  => ['Salary', 'Balit and Sons', 'Kaskaya', 'Overtime', 'Refund / cashback', 'Other income'],
         ],
         'accounts' => [$acc('Bank account', 'bank'), $acc('Cash', 'cash'), $acc('Credit card', 'card')],
         'txns' => [],

@@ -30,8 +30,8 @@ small,.small{font-size:.82rem}
 .top nav a.on{background:var(--brand-soft);color:var(--brand)}
 .top nav a.add{background:var(--brand);color:var(--brand-ink)}
 .top nav a.quiet{color:var(--muted)}
-.tabbar{position:fixed;bottom:0;left:0;right:0;z-index:5;display:grid;grid-template-columns:repeat(5,1fr);background:var(--card);border-top:1px solid var(--line);padding:.35rem .35rem calc(.35rem + env(safe-area-inset-bottom))}
-.tabbar a{text-align:center;padding:.55rem .2rem;border-radius:10px;color:var(--muted);font-size:.85rem;font-weight:600}
+.tabbar{position:fixed;bottom:0;left:0;right:0;z-index:5;display:grid;grid-template-columns:repeat(6,1fr);background:var(--card);border-top:1px solid var(--line);padding:.35rem .35rem calc(.35rem + env(safe-area-inset-bottom))}
+.tabbar a{text-align:center;padding:.55rem .1rem;border-radius:10px;color:var(--muted);font-size:.78rem;font-weight:600}
 .tabbar a.on{color:var(--brand);background:var(--brand-soft)}
 .tabbar a.add{background:var(--brand);color:var(--brand-ink)}
 @media (min-width:860px){.top nav{display:flex}.tabbar{display:none}body{padding-bottom:0}}
@@ -136,3 +136,5 @@ textarea{resize:vertical}
 body.auth{display:grid;place-items:center;min-height:100vh;padding:1rem}
 .auth-card{width:100%;max-width:380px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:1.6rem;box-shadow:var(--shadow)}
 .auth-card .brand{margin-bottom:1.2rem}
+.mailrow{display:grid;grid-template-columns:1fr auto;gap:.8rem;align-items:start;padding:.5rem 0}
+.mailrow small{display:block;overflow-wrap:anywhere}

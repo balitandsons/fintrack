@@ -1,6 +1,7 @@
 <?php
 require __DIR__ . '/inc/lib.php';
 require __DIR__ . '/inc/layout.php';
+require __DIR__ . '/inc/gmail.php';
 
 header('X-Frame-Options: DENY');
 header('X-Content-Type-Options: nosniff');
@@ -185,6 +186,26 @@ if ($post) {
         db_update(function (&$db) use ($id) { $db['goals'] = array_values(array_filter($db['goals'], fn($g) => $g['id'] !== $id)); });
         redirect('./?p=plan');
 
+    case 'gmail_save':
+        $g = gmail_cfg();
+        $g['client_id'] = trim($_POST['client_id'] ?? '');
+        if (trim($_POST['client_secret'] ?? '') !== '') $g['client_secret'] = trim($_POST['client_secret']);
+        gmail_save($g);
+        flash('Saved. Now tap Connect my Gmail.');
+        redirect('./?p=gmail');
+
+    case 'gmail_sync':
+        [$err, $rows] = gmail_sync();
+        flash($err ?: count($rows) . ' recent money emails found.');
+        redirect('./?p=gmail');
+
+    case 'gmail_disconnect':
+        $g = gmail_cfg();
+        foreach (['refresh_token', 'access_token', 'expires_at', 'email', 'rows', 'synced_at'] as $k) unset($g[$k]);
+        gmail_save($g);
+        flash('Gmail disconnected.');
+        redirect('./?p=gmail');
+
     case 'change_password':
         $a = auth();
         if (!password_verify($_POST['current'] ?? '', $a['hash'])) flash('Current password is wrong.');
@@ -193,6 +214,17 @@ if ($post) {
         redirect('./?p=plan');
     }
     redirect('./');
+}
+
+/* ---------- gmail connect (GET) ---------- */
+if ($p === 'gmail_connect') {
+    if (empty(gmail_cfg()['client_id'])) { flash('Save your Google Client ID first.'); redirect('./?p=gmail'); }
+    redirect(gmail_auth_url());
+}
+if ($p === 'gmail_callback') {
+    $err = gmail_handle_callback();
+    flash($err ?: 'Gmail connected.');
+    redirect('./?p=gmail');
 }
 
 /* ---------- export ---------- */
@@ -209,5 +241,5 @@ if ($p === 'export') {
 }
 
 /* ---------- pages ---------- */
-$pages = ['home' => 'page_home', 'add' => 'page_add', 'txns' => 'page_txns', 'accounts' => 'page_accounts', 'plan' => 'page_plan'];
+$pages = ['home' => 'page_home', 'add' => 'page_add', 'txns' => 'page_txns', 'accounts' => 'page_accounts', 'plan' => 'page_plan', 'gmail' => 'page_gmail'];
 ($pages[$p] ?? 'page_home')($db);
